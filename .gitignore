@@ -1,6 +1,7 @@
 # Logs
 *.log
 npm-debug.log*
+data.json
 
 # Dependency directories
 node_modules/

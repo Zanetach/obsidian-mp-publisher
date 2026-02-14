@@ -654,6 +654,11 @@ export class WechatPublisher {
             case 41005:
                 message = "缺少多媒体文件数据，请检查上传的图片是否有效。";
                 break;
+            case 40164:
+                const ipMatch = errmsg?.match(/\d+\.\d+\.\d+\.\d+/);
+                const ip = ipMatch ? ipMatch[0] : '当前IP';
+                message = `IP 白名单错误：${ip} 不在微信公众平台白名单中。请登录微信公众平台 → 设置与开发 → 基本配置 → IP 白名单，添加此 IP 地址。`;
+                break;
         }
 
         this.logger.error(message);
