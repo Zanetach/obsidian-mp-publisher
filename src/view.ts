@@ -5,7 +5,7 @@ import type { TemplateManager } from './templateManager';
 import { DonateManager } from './donateManager';
 import type { SettingsManager } from './settings/settings';
 import { renderMermaidDiagrams, initializeMermaid, checkIsDarkMode } from './utils/mermaid-renderer';
-import { ThemeManager } from './core/themeManager';
+import { ThemeManager, THEME_NAMES } from './core/themeManager';
 export const VIEW_TYPE_MP = 'mp-preview';
 
 export class MPView extends ItemView {
@@ -101,24 +101,25 @@ export class MPView extends ItemView {
 
 
 
-        // 创建自定义下拉选择器
+        // CSS 主题选择器
+        const themeOptions = Object.entries(THEME_NAMES).map(([value, label]) => ({ value, label }));
         this.customTemplateSelect = this.createCustomSelect(
             controlsGroup,
-            'mp-template-select',
-            await this.getTemplateOptions()
+            'mp-theme-select',
+            themeOptions
         );
-        this.customTemplateSelect.id = 'template-select';
-        
-        // 添加模板选择器的 change 事件监听
+        this.customTemplateSelect.id = 'theme-select';
+
+        // 添加主题选择器的 change 事件监听
         this.customTemplateSelect.querySelector('.custom-select')?.addEventListener('change', async (e: any) => {
             const value = e.detail.value;
-            this.templateManager.setCurrentTemplate(value);
             await this.settingsManager.updateSettings({
-                templateId: value
+                themeId: value
             });
-            this.templateManager.applyTemplate(this.previewEl);
+            await this.updatePreview();
+            new Notice(`主题已切换为: ${THEME_NAMES[value] || value}`);
         });
-    
+
         this.customFontSelect = this.createCustomSelect(
             controlsGroup,
             'mp-font-select',
@@ -158,26 +159,23 @@ export class MPView extends ItemView {
         // 从设置中恢复上次的选择
         const settings = this.settingsManager.getSettings();
 
-        // 恢复设置
-        if (settings.templateId) {
-            const templateSelect = this.customTemplateSelect.querySelector('.selected-text');
-            const templateDropdown = this.customTemplateSelect.querySelector('.select-dropdown');
-            if (templateSelect && templateDropdown) {
-                const option = await this.getTemplateOptions();
-                const selected = option.find(o => o.value === settings.templateId);
-                if (selected) {
-                    templateSelect.textContent = selected.label;
-                    this.customTemplateSelect.querySelector('.custom-select')?.setAttribute('data-value', selected.value);
-                    templateDropdown.querySelectorAll('.select-item').forEach(el => {
-                        if (el.getAttribute('data-value') === selected.value) {
-                            el.classList.add('selected');
-                        } else {
-                            el.classList.remove('selected');
-                        }
-                    });
-                }
+        // 恢复主题设置
+        const themeId = settings.themeId || 'basic';
+        const themeSelect = this.customTemplateSelect.querySelector('.selected-text');
+        const themeDropdown = this.customTemplateSelect.querySelector('.select-dropdown');
+        if (themeSelect && themeDropdown) {
+            const themeOption = Object.entries(THEME_NAMES).find(([value]) => value === themeId);
+            if (themeOption) {
+                themeSelect.textContent = themeOption[1];
+                this.customTemplateSelect.querySelector('.custom-select')?.setAttribute('data-value', themeOption[0]);
+                themeDropdown.querySelectorAll('.select-item').forEach(el => {
+                    if (el.getAttribute('data-value') === themeOption[0]) {
+                        el.classList.add('selected');
+                    } else {
+                        el.classList.remove('selected');
+                    }
+                });
             }
-            this.templateManager.setCurrentTemplate(settings.templateId);
         }
 
         if (settings.fontFamily) {
