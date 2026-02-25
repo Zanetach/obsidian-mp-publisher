@@ -82,12 +82,12 @@
     flex: none ;
 }
 
-.mp-controls-group .mp-copy-button {
+.mp-copy-button {
     background-color: var(--text-accent);
     color: var(--text-on-accent);
     border: none;
 }
-.mp-controls-group .mp-copy-button:hover {
+.mp-copy-button:hover {
     color: var(--text-on-accent);
     background-color: var(--text-accent);
 }
@@ -260,10 +260,17 @@
 
 /* 动作按钮尺寸增大 */
 .mp-action-button {
-    height: 44px !important;
-    font-size: 15px !important;
-    padding: 0 20px !important;
-    min-width: 140px;
+    height: 48px !important;
+    font-size: 16px !important;
+    padding: 0 22px !important;
+    min-width: 160px;
+    border-radius: 10px;
+}
+
+.mp-bottom-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 /* ===== 关于作者弹窗 ===== */

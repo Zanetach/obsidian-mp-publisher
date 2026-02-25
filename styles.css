@@ -211,13 +211,26 @@
   border: 1px solid var(--background-modifier-border);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 12px;
   flex-shrink: 0;
 }
 
 .mp-bottom-bar .mp-toolbar-btn {
   margin: 0;
+}
+
+.mp-bottom-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mp-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
 }
 
 /* 预览区域 */

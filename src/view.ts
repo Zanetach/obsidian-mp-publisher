@@ -241,10 +241,11 @@ export class MPView extends ItemView {
 
         // 底部工具栏
         const bottomBar = container.createEl('div', { cls: 'mp-bottom-bar' });
-        // 创建中间控件容器
-        const bottomControlsGroup = bottomBar.createEl('div', { cls: 'mp-controls-group' });
+        const bottomInfoGroup = bottomBar.createEl('div', { cls: 'mp-bottom-info' });
+        const bottomActionsGroup = bottomBar.createEl('div', { cls: 'mp-bottom-actions' });
+
         // 帮助按钮和提示（悬停显示）
-        const helpContainer = bottomControlsGroup.createEl('div', { cls: 'mp-help-container' });
+        const helpContainer = bottomInfoGroup.createEl('div', { cls: 'mp-help-container' });
         const helpButtonBottom = helpContainer.createEl('button', {
             cls: 'mp-about-button',
             attr: { 'aria-label': '帮助' }
@@ -263,19 +264,19 @@ export class MPView extends ItemView {
         });
 
         // 关于按钮
-        const aboutButton = bottomControlsGroup.createEl('button', {
+        const aboutButton = bottomInfoGroup.createEl('button', {
             cls: 'mp-about-button',
             attr: { 'aria-label': '关于插件' }
         });
         setIcon(aboutButton, 'info');
 
         // 复制按钮 - 尺寸增大
-        this.copyButton = bottomControlsGroup.createEl('button', {
-            text: '复制到公众号',
+        this.copyButton = bottomActionsGroup.createEl('button', {
+            text: '复制公众号',
             cls: 'mp-copy-button mp-action-button'
         });
         // 发布按钮 - 尺寸增大
-        const publishButton = bottomControlsGroup.createEl('button', {
+        const publishButton = bottomActionsGroup.createEl('button', {
             text: '发布',
             cls: 'mp-publish-button mp-action-button'
         });
@@ -292,13 +293,13 @@ export class MPView extends ItemView {
                     
                     setTimeout(() => {
                         this.copyButton.disabled = false;
-                        this.copyButton.setText('复制为公众号格式');
+                        this.copyButton.setText('复制公众号');
                     }, 2000);
                 } catch (error) {
                     this.copyButton.setText('复制失败');
                     setTimeout(() => {
                         this.copyButton.disabled = false;
-                        this.copyButton.setText('复制为公众号格式');
+                        this.copyButton.setText('复制公众号');
                     }, 2000);
                 }
             }
