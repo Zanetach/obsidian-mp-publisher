@@ -12,6 +12,11 @@ interface MPSettings {
     backgrounds: Background[];
     customBackgrounds: Background[];
     customFonts: { value: string; label: string; isPreset?: boolean }[];
+    // CSS 主题相关设置
+    themeId: string;
+    themeMode: 'auto' | 'light' | 'dark';
+    customThemeStyles: Record<string, string>;
+    customThemes: string[];
     // 微信公众号相关设置
     wechatAppId: string;
     wechatAppSecret: string;
@@ -34,13 +39,18 @@ const DEFAULT_SETTINGS: MPSettings = {
         {
             value: 'Optima-Regular, Optima, PingFangSC-light, PingFangTC-light, "PingFang SC", Cambria, Cochin, Georgia, Times, "Times New Roman", serif',
             label: '默认字体',
-            isPreset: true 
+            isPreset: true
         },
         { value: 'SimSun, "宋体", serif', label: '宋体', isPreset: true },
         { value: 'SimHei, "黑体", sans-serif', label: '黑体', isPreset: true },
         { value: 'KaiTi, "楷体", serif', label: '楷体', isPreset: true },
         { value: '"Microsoft YaHei", "微软雅黑", sans-serif', label: '雅黑', isPreset: true }
     ],
+    // CSS 主题默认设置
+    themeId: 'basic',
+    themeMode: 'auto',
+    customThemeStyles: {},
+    customThemes: [],
     // 微信公众号默认设置
     wechatAppId: '',
     wechatAppSecret: '',
@@ -92,6 +102,19 @@ export class SettingsManager {
         }
         if (!savedData.customFonts) {
             savedData.customFonts = DEFAULT_SETTINGS.customFonts;
+        }
+        // 加载 CSS 主题设置
+        if (!savedData.themeId) {
+            savedData.themeId = DEFAULT_SETTINGS.themeId;
+        }
+        if (!savedData.themeMode) {
+            savedData.themeMode = DEFAULT_SETTINGS.themeMode;
+        }
+        if (!savedData.customThemeStyles) {
+            savedData.customThemeStyles = DEFAULT_SETTINGS.customThemeStyles;
+        }
+        if (!savedData.customThemes) {
+            savedData.customThemes = DEFAULT_SETTINGS.customThemes;
         }
         this.settings = Object.assign({}, DEFAULT_SETTINGS, savedData);
     }

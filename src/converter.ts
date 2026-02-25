@@ -1,6 +1,7 @@
 import { App, MarkdownRenderer, Component } from 'obsidian';
 import { applyWechatStyle } from './utils/wechat-styler';
 import { cleanObsidianUIElements } from './utils/html-cleaner';
+import { createMarkdownParser, processHtml } from './core';
 
 export class MPConverter {
     private static app: App;
@@ -153,4 +154,36 @@ export async function markdownToHtml(
             document.body.removeChild(tempDiv);
         }
     }
+}
+
+// 使用 markdown-it 解析器的版本
+let markdownParser: any = null;
+
+function getMarkdownParser() {
+    if (!markdownParser) {
+        markdownParser = createMarkdownParser();
+    }
+    return markdownParser;
+}
+
+/**
+ * 使用 markdown-it 解析 Markdown 并应用 CSS 主题
+ * @param markdown Markdown 内容
+ * @param css 主题 CSS
+ * @param inlineStyles 是否内联样式（发布到微信时为 true）
+ */
+export function parseMarkdownWithTheme(
+    markdown: string,
+    css: string = '',
+    inlineStyles: boolean = false
+): string {
+    const parser = getMarkdownParser();
+    const html = parser.render(markdown);
+
+    if (!css) {
+        return html;
+    }
+
+    // 使用 ThemeProcessor 处理 HTML 并应用 CSS
+    return processHtml(html, css, inlineStyles, false, false);
 }

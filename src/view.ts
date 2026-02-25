@@ -1,10 +1,12 @@
-import { ItemView, WorkspaceLeaf, MarkdownRenderer, TFile, setIcon, MarkdownView } from 'obsidian';
+import { ItemView, WorkspaceLeaf, MarkdownRenderer, TFile, setIcon, MarkdownView, Notice } from 'obsidian';
 import { MPConverter } from './converter';
 import { CopyManager } from './copyManager';
 import type { TemplateManager } from './templateManager';
 import { DonateManager } from './donateManager';
 import type { SettingsManager } from './settings/settings';
 import { BackgroundManager } from './backgroundManager';
+import { renderMermaidDiagrams, initializeMermaid, checkIsDarkMode } from './utils/mermaid-renderer';
+import { ThemeManager } from './core/themeManager';
 export const VIEW_TYPE_MP = 'mp-preview';
 
 export class MPView extends ItemView {
@@ -66,7 +68,41 @@ export class MPView extends ItemView {
         setIcon(this.lockButton, 'lock');
         this.lockButton.setAttribute('aria-label', '开启实时预览状态');
         this.lockButton.addEventListener('click', () => this.togglePreviewLock());
-    
+
+        // 明暗模式切换按钮
+        const darkModeButton = controlsGroup.createEl('button', {
+            cls: 'mp-darkmode-button',
+            attr: { 'aria-label': '切换明暗模式' }
+        });
+        setIcon(darkModeButton, 'sun');
+        const currentSettingsForInit = this.settingsManager.getSettings();
+        if (currentSettingsForInit.themeMode === 'dark' || (currentSettingsForInit.themeMode === 'auto' && checkIsDarkMode())) {
+            setIcon(darkModeButton, 'moon');
+        }
+        darkModeButton.addEventListener('click', async () => {
+            const currentSettings = this.settingsManager.getSettings();
+            const currentMode = currentSettings.themeMode;
+
+            // 循环切换: auto -> light -> dark -> auto
+            let newMode: 'auto' | 'light' | 'dark' = 'auto';
+            if (currentMode === 'auto') newMode = 'light';
+            else if (currentMode === 'light') newMode = 'dark';
+            else newMode = 'auto';
+
+            await this.settingsManager.updateSettings({ themeMode: newMode });
+
+            // 更新图标
+            if (newMode === 'dark' || (newMode === 'auto' && checkIsDarkMode())) {
+                setIcon(darkModeButton, 'moon');
+            } else {
+                setIcon(darkModeButton, 'sun');
+            }
+
+            // 刷新预览
+            await this.updatePreview();
+            new Notice(`主题模式已切换为: ${newMode === 'auto' ? '跟随系统' : newMode === 'light' ? '亮色' : '暗色'}`);
+        });
+
 
         
         // 添加背景选择器
@@ -442,9 +478,39 @@ export class MPView extends ItemView {
             this
         );
 
+        // 应用 CSS 主题
+        const settings = this.settingsManager.getSettings();
+        const themeId = settings.themeId || 'basic';
+        const isDarkMode = settings.themeMode === 'dark' ||
+            (settings.themeMode === 'auto' && checkIsDarkMode());
+
+        // 创建 ThemeManager 实例并应用主题 CSS
+        const themeManager = new ThemeManager({
+            defaultTheme: themeId,
+            themeMode: settings.themeMode,
+            customThemeStyles: settings.customThemeStyles,
+            customThemes: settings.customThemes
+        });
+        const themeCss = themeManager.getThemeCss(themeId, isDarkMode);
+
+        // 移除旧的主题样式元素
+        const oldStyleEl = this.previewEl.querySelector('#mp-theme-style');
+        if (oldStyleEl) {
+            oldStyleEl.remove();
+        }
+
+        // 注入新的主题样式
+        const styleEl = document.createElement('style');
+        styleEl.id = 'mp-theme-style';
+        styleEl.textContent = themeCss;
+        this.previewEl.insertBefore(styleEl, this.previewEl.firstChild);
+
         MPConverter.formatContent(this.previewEl);
         this.templateManager.applyTemplate(this.previewEl);
         this.backgroundManager.applyBackground(this.previewEl);
+
+        // 渲染 Mermaid 图表
+        await renderMermaidDiagrams(this.previewEl, isDarkMode, 'preview');
 
         // 根据滚动位置决定是否自动滚动
         if (isAtBottom) {
