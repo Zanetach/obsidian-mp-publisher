@@ -8,9 +8,12 @@ node_modules/
 
 # Build output
 main.js.map
-main.js
 *.js.map
+
+# Keep these for Obsidian plugin distribution
+main.js
 manifest.json
+styles.css
 
 # OS files
 .DS_Store
