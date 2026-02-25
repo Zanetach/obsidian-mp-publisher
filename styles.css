@@ -6,7 +6,7 @@
 }
 .mp-toolbar,
 .mp-bottom-bar {
-  padding: 15px 0;
+  padding: 8px;
   max-width: 580px;
   background: var(--background-secondary);
 }
@@ -22,24 +22,25 @@
 }
 .mp-controls-group {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: center;
   width: 100%;
   justify-content: flex-start;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   min-width: 0;
 }
 .mp-controls-group button {
-  height: 36px;
-  border-radius: 8px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: 6px;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-primary);
   color: var(--text-normal);
-  font-size: 14px;
+  font-size: 12px;
   box-shadow: 0 1px 3px var(--background-modifier-box-shadow);
-  flex: 1;
   white-space: nowrap;
   overflow: hidden;
+  padding: 0 8px;
 }
 .mp-controls-group button span {
   overflow: hidden;
@@ -79,15 +80,14 @@
 }
 .custom-select-container {
   position: relative;
-  min-width: 36px;
-  max-width: 120px;
-  flex: 1;
+  min-width: 60px;
+  max-width: 100px;
 }
 .custom-select {
-  height: 36px;
-  padding: 0 12px;
+  height: 32px;
+  padding: 0 8px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: var(--background-primary);
   display: flex;
   align-items: center;
@@ -98,6 +98,7 @@
   color: var(--text-normal);
   box-shadow: 0 1px 3px var(--background-modifier-box-shadow);
   white-space: nowrap;
+  font-size: 12px;
   overflow: hidden;
 }
 .selected-text {

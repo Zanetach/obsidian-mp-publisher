@@ -188,25 +188,7 @@ export class MPView extends ItemView {
         const settings = this.settingsManager.getSettings();
         
         // 恢复背景设置
-        if (settings.backgroundId) {
-            const backgroundSelect = this.customBackgroundSelect.querySelector('.selected-text');
-            const backgroundDropdown = this.customBackgroundSelect.querySelector('.select-dropdown');
-            if (backgroundSelect && backgroundDropdown) {
-                const option = backgroundOptions.find(o => o.value === settings.backgroundId);
-                if (option) {
-                    backgroundSelect.textContent = option.label;
-                    this.customBackgroundSelect.querySelector('.custom-select')?.setAttribute('data-value', option.value);
-                    backgroundDropdown.querySelectorAll('.select-item').forEach(el => {
-                        if (el.getAttribute('data-value') === option.value) {
-                            el.classList.add('selected');
-                        } else {
-                            el.classList.remove('selected');
-                        }
-                    });
-                }
-            }
-            this.backgroundManager.setBackground(settings.backgroundId);
-        }
+        this.backgroundManager.setBackground(settings.backgroundId || '');
 
         // 恢复设置
         if (settings.templateId) {
@@ -500,9 +482,11 @@ export class MPView extends ItemView {
         }
 
         // 注入新的主题样式
+        // 将 #mdb 选择器替换为 .mp-content-section
+        const processedCss = themeCss.replace(/#mdb\s/g, '.mp-content-section ');
         const styleEl = document.createElement('style');
         styleEl.id = 'mp-theme-style';
-        styleEl.textContent = themeCss;
+        styleEl.textContent = processedCss;
         this.previewEl.insertBefore(styleEl, this.previewEl.firstChild);
 
         MPConverter.formatContent(this.previewEl);
