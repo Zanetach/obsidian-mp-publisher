@@ -44,6 +44,29 @@ export class MPSettingTab extends PluginSettingTab {
         return section;
     }
 
+    private createSubsection(containerEl: HTMLElement, title: string, renderContent: (contentEl: HTMLElement) => void) {
+        const section = containerEl.createDiv('mp-settings-subsection');
+        const header = section.createDiv('mp-settings-subsection-header');
+        const toggle = header.createSpan('mp-settings-subsection-toggle');
+        setIcon(toggle, 'chevron-right');
+
+        header.createEl('h3', { text: title });
+
+        const content = section.createDiv('mp-settings-subsection-content');
+        renderContent(content);
+
+        header.addEventListener('click', () => {
+            const isExpanded = !section.hasClass('is-expanded');
+            section.toggleClass('is-expanded', isExpanded);
+            setIcon(toggle, isExpanded ? 'chevron-down' : 'chevron-right');
+        });
+
+        section.addClass('is-expanded');
+        setIcon(toggle, 'chevron-down');
+
+        return section;
+    }
+
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
@@ -51,227 +74,237 @@ export class MPSettingTab extends PluginSettingTab {
 
         containerEl.createEl('h2', { text: 'MP Preview' });
 
-        this.createSection(containerEl, '字体管理', el => this.renderBasicSettings(el));
+        this.createSection(containerEl, '基本选项', el => this.renderBasicSettings(el));
         this.createSection(containerEl, 'CSS 主题', el => this.renderCssThemeSettings(el));
         this.createSection(containerEl, '微信公众号', el => this.renderWechatSettings(el));
     }
 
     private renderBasicSettings(containerEl: HTMLElement): void {
-        // 字体列表
-        const fontList = containerEl.createDiv('font-management');
-        this.plugin.settingsManager.getFontOptions().forEach(font => {
-            const fontItem = fontList.createDiv('font-item');
-            const setting = new Setting(fontItem)
-                .setName(font.label)
-                .setDesc(font.value);
+        this.createSubsection(containerEl, '字体管理', fontContent => {
+            const fontList = fontContent.createDiv('font-management');
+            this.plugin.settingsManager.getFontOptions().forEach(font => {
+                const fontItem = fontList.createDiv('font-item');
+                const setting = new Setting(fontItem)
+                    .setName(font.label)
+                    .setDesc(font.value);
 
-            // 只为非预设字体添加编辑和删除按钮
-            if (!font.isPreset) {
-                setting
-                    .addExtraButton(btn =>
-                        btn.setIcon('pencil')
-                            .setTooltip('编辑')
-                            .onClick(() => {
-                                new CreateFontModal(
-                                    this.app,
-                                    async (updatedFont) => {
-                                        await this.plugin.settingsManager.updateFont(font.value, updatedFont);
-                                        this.display();
-                                        new Notice('请重启 Obsidian 或重新加载以使更改生效');
-                                    },
-                                    font
-                                ).open();
-                            }))
-                    .addExtraButton(btn =>
-                        btn.setIcon('trash')
-                            .setTooltip('删除')
-                            .onClick(() => {
-                                // 新增确认模态框
-                                new ConfirmModal(
-                                    this.app,
-                                    '确认删除字体',
-                                    `确定要删除「${font.label}」字体配置吗？`,
-                                    async () => {
-                                        await this.plugin.settingsManager.removeFont(font.value);
-                                        this.display();
-                                        new Notice('请重启 Obsidian 或重新加载以使更改生效');
-                                    }
-                                ).open();
-                            }));
-            }
+                // 只为非预设字体添加编辑和删除按钮
+                if (!font.isPreset) {
+                    setting
+                        .addExtraButton(btn =>
+                            btn.setIcon('pencil')
+                                .setTooltip('编辑')
+                                .onClick(() => {
+                                    new CreateFontModal(
+                                        this.app,
+                                        async (updatedFont) => {
+                                            await this.plugin.settingsManager.updateFont(font.value, updatedFont);
+                                            this.display();
+                                            new Notice('请重启 Obsidian 或重新加载以使更改生效');
+                                        },
+                                        font
+                                    ).open();
+                                }))
+                        .addExtraButton(btn =>
+                            btn.setIcon('trash')
+                                .setTooltip('删除')
+                                .onClick(() => {
+                                    // 新增确认模态框
+                                    new ConfirmModal(
+                                        this.app,
+                                        '确认删除字体',
+                                        `确定要删除「${font.label}」字体配置吗？`,
+                                        async () => {
+                                            await this.plugin.settingsManager.removeFont(font.value);
+                                            this.display();
+                                            new Notice('请重启 Obsidian 或重新加载以使更改生效');
+                                        }
+                                    ).open();
+                                }));
+                }
+            });
+
+            // 添加新字体按钮
+            new Setting(fontContent)
+                .addButton(btn => btn
+                    .setButtonText('+ 添加字体')
+                    .setCta()
+                    .onClick(() => {
+                        new CreateFontModal(
+                            this.app,
+                            async (newFont) => {
+                                await this.plugin.settingsManager.addCustomFont(newFont);
+                                this.display();
+                                new Notice('请重启 Obsidian 或重新加载以使更改生效');
+                            }
+                        ).open();
+                    }));
         });
-
-        // 添加新字体按钮
-        new Setting(containerEl)
-            .addButton(btn => btn
-                .setButtonText('+ 添加字体')
-                .setCta()
-                .onClick(() => {
-                    new CreateFontModal(
-                        this.app,
-                        async (newFont) => {
-                            await this.plugin.settingsManager.addCustomFont(newFont);
-                            this.display();
-                            new Notice('请重启 Obsidian 或重新加载以使更改生效');
-                        }
-                    ).open();
-                }));
     }
 
 
     private renderWechatSettings(containerEl: HTMLElement): void {
-        // AppID设置
-        new Setting(containerEl)
-            .setName('AppID')
-            .setDesc('微信公众号的AppID')
-            .addText(text => text
-                .setPlaceholder('输入AppID')
-                .setValue(this.plugin.settingsManager.getSettings().wechatAppId || '')
-                .onChange(async (value) => {
-                    await this.plugin.settingsManager.updateSettings({
-                        wechatAppId: value
-                    });
-                }));
+        this.createSubsection(containerEl, 'AppID', contentEl => {
+            new Setting(contentEl)
+                .setName('AppID')
+                .setDesc('微信公众号的AppID')
+                .addText(text => text
+                    .setPlaceholder('输入AppID')
+                    .setValue(this.plugin.settingsManager.getSettings().wechatAppId || '')
+                    .onChange(async (value) => {
+                        await this.plugin.settingsManager.updateSettings({
+                            wechatAppId: value
+                        });
+                    }));
+        });
 
-        // AppSecret设置
-        new Setting(containerEl)
-            .setName('AppSecret')
-            .setDesc('微信公众号的AppSecret')
-            .addText(text => text
-                .setPlaceholder('输入AppSecret')
-                .setValue(this.plugin.settingsManager.getSettings().wechatAppSecret || '')
-                .onChange(async (value) => {
-                    await this.plugin.settingsManager.updateSettings({
-                        wechatAppSecret: value
-                    });
-                }));
+        this.createSubsection(containerEl, 'AppSecret', contentEl => {
+            new Setting(contentEl)
+                .setName('AppSecret')
+                .setDesc('微信公众号的AppSecret')
+                .addText(text => text
+                    .setPlaceholder('输入AppSecret')
+                    .setValue(this.plugin.settingsManager.getSettings().wechatAppSecret || '')
+                    .onChange(async (value) => {
+                        await this.plugin.settingsManager.updateSettings({
+                            wechatAppSecret: value
+                        });
+                    }));
+        });
 
-        // 图片存储位置设置
-        new Setting(containerEl)
-            .setName('图片存储位置')
-            .setDesc('设置图片保存的文件夹路径。支持使用 ${filename} 代表当前文档的文件名')
-            .addText(text => text
-                .setPlaceholder('${filename}__assets')
-                .setValue(this.plugin.settingsManager.getSettings().imageAttachmentLocation || '')
-                .onChange(async (value) => {
-                    await this.plugin.settingsManager.updateSettings({
-                        imageAttachmentLocation: value
-                    });
-                }));
+        this.createSubsection(containerEl, '图片存储位置', contentEl => {
+            new Setting(contentEl)
+                .setName('图片存储位置')
+                .setDesc('设置图片保存的文件夹路径。支持使用 ${filename} 代表当前文档的文件名')
+                .addText(text => text
+                    .setPlaceholder('${filename}__assets')
+                    .setValue(this.plugin.settingsManager.getSettings().imageAttachmentLocation || '')
+                    .onChange(async (value) => {
+                        await this.plugin.settingsManager.updateSettings({
+                            imageAttachmentLocation: value
+                        });
+                    }));
+        });
 
-        // 启用微信样式
-        new Setting(containerEl)
-            .setName('启用微信样式渲染')
-            .setDesc('启用后将使用微信公众号优化的样式渲染')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settingsManager.getSettings().enableWechatStyle)
-                .onChange(async (value) => {
-                    await this.plugin.settingsManager.updateSettings({
-                        enableWechatStyle: value
-                    });
-                    new Notice(`微信样式渲染已${value ? '启用' : '禁用'}`);
-                }));
+        this.createSubsection(containerEl, '启用微信样式渲染', contentEl => {
+            new Setting(contentEl)
+                .setName('启用微信样式渲染')
+                .setDesc('启用后将使用微信公众号优化的样式渲染')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settingsManager.getSettings().enableWechatStyle)
+                    .onChange(async (value) => {
+                        await this.plugin.settingsManager.updateSettings({
+                            enableWechatStyle: value
+                        });
+                        new Notice(`微信样式渲染已${value ? '启用' : '禁用'}`);
+                    }));
+        });
 
-        // 调试模式
-        new Setting(containerEl)
-            .setName('调试模式')
-            .setDesc('启用后将显示详细的调试日志信息')
-            .addToggle(toggle => toggle
-                .setValue(this.plugin.settingsManager.getSettings().debugMode)
-                .onChange(async (value) => {
-                    await this.plugin.settingsManager.updateSettings({
-                        debugMode: value
-                    });
-                    this.plugin.logger.setDebugMode(value);
-                }));
+        this.createSubsection(containerEl, '调试模式', contentEl => {
+            new Setting(contentEl)
+                .setName('调试模式')
+                .setDesc('启用后将显示详细的调试日志信息')
+                .addToggle(toggle => toggle
+                    .setValue(this.plugin.settingsManager.getSettings().debugMode)
+                    .onChange(async (value) => {
+                        await this.plugin.settingsManager.updateSettings({
+                            debugMode: value
+                        });
+                        this.plugin.logger.setDebugMode(value);
+                    }));
+        });
     }
 
     private renderCssThemeSettings(containerEl: HTMLElement): void {
         const settings = this.plugin.settingsManager.getSettings();
 
-        // 主题选择
-        new Setting(containerEl)
-            .setName('选择主题')
-            .setDesc('选择用于预览和发布的主题')
-            .addDropdown(dropdown => {
-                // 预设主题
-                const builtInThemes = Object.keys(THEME_NAMES);
-                builtInThemes.forEach(themeKey => {
-                    dropdown.addOption(themeKey, THEME_NAMES[themeKey] || themeKey);
+        this.createSubsection(containerEl, '选择主题', contentEl => {
+            new Setting(contentEl)
+                .setName('选择主题')
+                .setDesc('选择用于预览和发布的主题')
+                .addDropdown(dropdown => {
+                    // 预设主题
+                    const builtInThemes = Object.keys(THEME_NAMES);
+                    builtInThemes.forEach(themeKey => {
+                        dropdown.addOption(themeKey, THEME_NAMES[themeKey] || themeKey);
+                    });
+
+                    // 自定义主题
+                    if (settings.customThemes && settings.customThemes.length > 0) {
+                        dropdown.addOption('', '--- 自定义主题 ---');
+                        settings.customThemes.forEach(themeName => {
+                            dropdown.addOption(themeName, themeName);
+                        });
+                    }
+
+                    dropdown.setValue(settings.themeId || 'basic')
+                        .onChange(async (value) => {
+                            await this.plugin.settingsManager.updateSettings({
+                                themeId: value
+                            });
+                            new Notice(`主题已切换为: ${THEME_NAMES[value] || value}`);
+                        });
                 });
+        });
 
-                // 自定义主题
-                if (settings.customThemes && settings.customThemes.length > 0) {
-                    dropdown.addOption('', '--- 自定义主题 ---');
-                    settings.customThemes.forEach(themeName => {
-                        dropdown.addOption(themeName, themeName);
-                    });
-                }
-
-                dropdown.setValue(settings.themeId || 'basic')
-                    .onChange(async (value) => {
-                        await this.plugin.settingsManager.updateSettings({
-                            themeId: value
+        this.createSubsection(containerEl, '明暗模式', contentEl => {
+            new Setting(contentEl)
+                .setName('明暗模式')
+                .setDesc('选择预览视图的主题模式')
+                .addDropdown(dropdown => {
+                    dropdown.addOption('auto', '跟随系统');
+                    dropdown.addOption('light', '亮色模式');
+                    dropdown.addOption('dark', '暗色模式');
+                    dropdown.setValue(settings.themeMode || 'auto')
+                        .onChange(async (value) => {
+                            await this.plugin.settingsManager.updateSettings({
+                                themeMode: value as 'auto' | 'light' | 'dark'
+                            });
+                            new Notice(`明暗模式已切换为: ${value === 'auto' ? '跟随系统' : value === 'light' ? '亮色' : '暗色'}`);
                         });
-                        new Notice(`主题已切换为: ${THEME_NAMES[value] || value}`);
-                    });
-            });
+                });
+        });
 
-        // 明暗模式选择
-        new Setting(containerEl)
-            .setName('明暗模式')
-            .setDesc('选择预览视图的主题模式')
-            .addDropdown(dropdown => {
-                dropdown.addOption('auto', '跟随系统');
-                dropdown.addOption('light', '亮色模式');
-                dropdown.addOption('dark', '暗色模式');
-                dropdown.setValue(settings.themeMode || 'auto')
-                    .onChange(async (value) => {
-                        await this.plugin.settingsManager.updateSettings({
-                            themeMode: value as 'auto' | 'light' | 'dark'
+        this.createSubsection(containerEl, '管理自定义主题', contentEl => {
+            new Setting(contentEl)
+                .setName('管理自定义主题')
+                .setDesc('创建、编辑或删除自定义主题')
+                .addButton(btn => {
+                    btn.setButtonText('管理主题')
+                        .onClick(() => {
+                            new ThemeManagerModal(this.app, this.plugin).open();
                         });
-                        new Notice(`明暗模式已切换为: ${value === 'auto' ? '跟随系统' : value === 'light' ? '亮色' : '暗色'}`);
-                    });
-            });
+                });
+        });
 
-        // 主题管理按钮
-        new Setting(containerEl)
-            .setName('管理自定义主题')
-            .setDesc('创建、编辑或删除自定义主题')
-            .addButton(btn => {
-                btn.setButtonText('管理主题')
-                    .onClick(() => {
-                        new ThemeManagerModal(this.app, this.plugin).open();
-                    });
-            });
+        this.createSubsection(containerEl, '导出当前主题', contentEl => {
+            new Setting(contentEl)
+                .setName('导出当前主题')
+                .setDesc('将当前选中的主题导出为 CSS 文件')
+                .addButton(btn => {
+                    btn.setButtonText('导出 CSS')
+                        .onClick(() => {
+                            const themeId = settings.themeId || 'basic';
+                            const tm = new ThemeManager({
+                                defaultTheme: themeId,
+                                customThemeStyles: settings.customThemeStyles,
+                                customThemes: settings.customThemes
+                            });
+                            const css = tm.getThemeCss(themeId);
 
-        // 导出主题按钮
-        new Setting(containerEl)
-            .setName('导出当前主题')
-            .setDesc('将当前选中的主题导出为 CSS 文件')
-            .addButton(btn => {
-                btn.setButtonText('导出 CSS')
-                    .onClick(() => {
-                        const themeId = settings.themeId || 'basic';
-                        const tm = new ThemeManager({
-                            defaultTheme: themeId,
-                            customThemeStyles: settings.customThemeStyles,
-                            customThemes: settings.customThemes
+                            // 创建下载链接
+                            const blob = new Blob([css], { type: 'text/css' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${themeId}.css`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+
+                            new Notice(`主题 ${themeId} 已导出为 CSS 文件`);
                         });
-                        const css = tm.getThemeCss(themeId);
-
-                        // 创建下载链接
-                        const blob = new Blob([css], { type: 'text/css' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `${themeId}.css`;
-                        a.click();
-                        URL.revokeObjectURL(url);
-
-                        new Notice(`主题 ${themeId} 已导出为 CSS 文件`);
-                    });
-            });
+                });
+        });
     }
 }
 
