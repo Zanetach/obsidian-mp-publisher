@@ -4,7 +4,6 @@ import { CopyManager } from './copyManager';
 import type { TemplateManager } from './templateManager';
 import { DonateManager } from './donateManager';
 import type { SettingsManager } from './settings/settings';
-import { BackgroundManager } from './backgroundManager';
 import { renderMermaidDiagrams, initializeMermaid, checkIsDarkMode } from './utils/mermaid-renderer';
 import { ThemeManager } from './core/themeManager';
 export const VIEW_TYPE_MP = 'mp-preview';
@@ -21,12 +20,10 @@ export class MPView extends ItemView {
     private customTemplateSelect: HTMLElement;
     private customFontSelect: HTMLElement;
     private fontSizeSelect: HTMLInputElement;
-    private backgroundManager: BackgroundManager;
-    private customBackgroundSelect: HTMLElement;
     private plugin: any; // 添加 plugin 引用
 
     constructor(
-        leaf: WorkspaceLeaf, 
+        leaf: WorkspaceLeaf,
         templateManager: TemplateManager,
         settingsManager: SettingsManager,
         plugin: any // 添加 plugin 参数
@@ -34,7 +31,6 @@ export class MPView extends ItemView {
         super(leaf);
         this.templateManager = templateManager;
         this.settingsManager = settingsManager;
-        this.backgroundManager = new BackgroundManager(this.settingsManager);
         this.plugin = plugin; // 保存 plugin 引用
     }
 
@@ -104,32 +100,7 @@ export class MPView extends ItemView {
         });
 
 
-        
-        // 添加背景选择器
-        const backgroundOptions = [
-            { value: '', label: '无背景' },
-            ...(this.settingsManager.getVisibleBackgrounds()?.map(bg => ({
-                value: bg.id,
-                label: bg.name
-            })) || [])
-        ];
-        
-        this.customBackgroundSelect = this.createCustomSelect(
-            controlsGroup,
-            'mp-background-select',
-            backgroundOptions
-        );
-        
-        // 添加背景选择器的事件监听
-        this.customBackgroundSelect.querySelector('.custom-select')?.addEventListener('change', async (e: any) => {
-            const value = e.detail.value;
-            this.backgroundManager.setBackground(value);
-            await this.settingsManager.updateSettings({
-                backgroundId: value
-            });
-            this.backgroundManager.applyBackground(this.previewEl);
-        });
-        
+
         // 创建自定义下拉选择器
         this.customTemplateSelect = this.createCustomSelect(
             controlsGroup,
@@ -186,9 +157,6 @@ export class MPView extends ItemView {
 
         // 从设置中恢复上次的选择
         const settings = this.settingsManager.getSettings();
-        
-        // 恢复背景设置
-        this.backgroundManager.setBackground(settings.backgroundId || '');
 
         // 恢复设置
         if (settings.templateId) {
@@ -380,15 +348,14 @@ export class MPView extends ItemView {
         // 更新所有自定义选择器的禁用状态
         const templateSelect = this.customTemplateSelect.querySelector('.custom-select');
         const fontSelect = this.customFontSelect.querySelector('.custom-select');
-        const backgroundSelect = this.customBackgroundSelect.querySelector('.custom-select');
-        
-        [templateSelect, fontSelect, backgroundSelect].forEach(select => {
+
+        [templateSelect, fontSelect].forEach(select => {
             if (select) {
                 select.classList.toggle('disabled', !enabled);
                 select.setAttribute('style', `pointer-events: ${enabled ? 'auto' : 'none'}`);
             }
         });
-        
+
         this.fontSizeSelect.disabled = !enabled;
         this.copyButton.disabled = !enabled;
         
@@ -491,7 +458,6 @@ export class MPView extends ItemView {
 
         MPConverter.formatContent(this.previewEl);
         this.templateManager.applyTemplate(this.previewEl);
-        this.backgroundManager.applyBackground(this.previewEl);
 
         // 渲染 Mermaid 图表
         await renderMermaidDiagrams(this.previewEl, isDarkMode, 'preview');
