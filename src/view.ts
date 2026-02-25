@@ -52,22 +52,23 @@ export class MPView extends ItemView {
         container.classList.remove('view-content');
         container.classList.add('mp-view-content');
         
-        // 顶部工具栏
-        const toolbar = container.createEl('div', { cls: 'mp-toolbar' });
-        const controlsGroup = toolbar.createEl('div', { cls: 'mp-controls-group' });
-        
+        // 顶部工具栏 - 第一行：功能按钮
+        const toolbar1 = container.createEl('div', { cls: 'mp-toolbar mp-toolbar-row1' });
+
+        // 左侧按钮组
+        const leftGroup1 = toolbar1.createEl('div', { cls: 'mp-toolbar-group' });
+
         // 锁定按钮
-        this.lockButton = controlsGroup.createEl('button', {
-            cls: 'mp-lock-button',
-            attr: { 'aria-label': '关闭实时预览状态' }
+        this.lockButton = leftGroup1.createEl('button', {
+            cls: 'mp-toolbar-btn',
+            attr: { 'aria-label': '锁定预览' }
         });
         setIcon(this.lockButton, 'lock');
-        this.lockButton.setAttribute('aria-label', '开启实时预览状态');
         this.lockButton.addEventListener('click', () => this.togglePreviewLock());
 
         // 明暗模式切换按钮
-        const darkModeButton = controlsGroup.createEl('button', {
-            cls: 'mp-darkmode-button',
+        const darkModeButton = leftGroup1.createEl('button', {
+            cls: 'mp-toolbar-btn',
             attr: { 'aria-label': '切换明暗模式' }
         });
         setIcon(darkModeButton, 'sun');
@@ -78,28 +79,31 @@ export class MPView extends ItemView {
         darkModeButton.addEventListener('click', async () => {
             const currentSettings = this.settingsManager.getSettings();
             const currentMode = currentSettings.themeMode;
-
-            // 循环切换: auto -> light -> dark -> auto
             let newMode: 'auto' | 'light' | 'dark' = 'auto';
             if (currentMode === 'auto') newMode = 'light';
             else if (currentMode === 'light') newMode = 'dark';
             else newMode = 'auto';
-
             await this.settingsManager.updateSettings({ themeMode: newMode });
-
-            // 更新图标
             if (newMode === 'dark' || (newMode === 'auto' && checkIsDarkMode())) {
                 setIcon(darkModeButton, 'moon');
             } else {
                 setIcon(darkModeButton, 'sun');
             }
-
-            // 刷新预览
             await this.updatePreview();
             new Notice(`主题模式已切换为: ${newMode === 'auto' ? '跟随系统' : newMode === 'light' ? '亮色' : '暗色'}`);
         });
 
+        // 右侧操作按钮组
+        const rightGroup1 = toolbar1.createEl('div', { cls: 'mp-toolbar-group mp-toolbar-group-right' });
+        const helpButton = rightGroup1.createEl('button', {
+            cls: 'mp-toolbar-btn mp-help-button',
+            attr: { 'aria-label': '帮助' }
+        });
+        setIcon(helpButton, 'help-circle');
 
+        // 顶部工具栏 - 第二行：样式选择
+        const toolbar2 = container.createEl('div', { cls: 'mp-toolbar mp-toolbar-row2' });
+        const controlsGroup = toolbar2.createEl('div', { cls: 'mp-controls-group' });
 
         // CSS 主题选择器
         const themeOptions = Object.entries(THEME_NAMES).map(([value, label]) => ({ value, label }));
@@ -139,11 +143,11 @@ export class MPView extends ItemView {
 
         // 字号调整
         const fontSizeGroup = controlsGroup.createEl('div', { cls: 'mp-font-size-group' });
-        const decreaseButton = fontSizeGroup.createEl('button', { 
+        const decreaseButton = fontSizeGroup.createEl('button', {
             cls: 'mp-font-size-btn',
             text: '-'
         });
-        this.fontSizeSelect = fontSizeGroup.createEl('input', { 
+        this.fontSizeSelect = fontSizeGroup.createEl('input', {
             cls: 'mp-font-size-input',
             type: 'text',
             value: '16',
@@ -239,12 +243,12 @@ export class MPView extends ItemView {
         const bottomBar = container.createEl('div', { cls: 'mp-bottom-bar' });
         // 创建中间控件容器
         const bottomControlsGroup = bottomBar.createEl('div', { cls: 'mp-controls-group' });
-        // 帮助按钮
-        const helpButton = bottomControlsGroup.createEl('button', {
-            cls: 'mp-help-button',
-            attr: { 'aria-label': '使用指南' }
+        // 关于按钮
+        const aboutButton = bottomControlsGroup.createEl('button', {
+            cls: 'mp-about-button',
+            attr: { 'aria-label': '关于插件' }
         });
-        setIcon(helpButton, 'help');
+        setIcon(aboutButton, 'info');
         // 帮助提示框
         bottomControlsGroup.createEl('div', {
             cls: 'mp-help-tooltip',
