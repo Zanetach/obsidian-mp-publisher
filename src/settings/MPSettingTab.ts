@@ -56,8 +56,6 @@ export class MPSettingTab extends PluginSettingTab {
         containerEl.createEl('h2', { text: 'MP Preview' });
 
         this.createSection(containerEl, '基本选项', el => this.renderBasicSettings(el));
-        this.createSection(containerEl, '模板选项', el => this.renderTemplateSettings(el));
-        this.createSection(containerEl, '背景选项', el => this.renderBackgroundSettings(el));
         this.createSection(containerEl, 'CSS 主题', el => this.renderCssThemeSettings(el));
         this.createSection(containerEl, '微信公众号', el => this.renderWechatSettings(el));
     }

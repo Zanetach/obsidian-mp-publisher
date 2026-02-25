@@ -232,6 +232,40 @@
     display: block;
 }
 
+/* 帮助容器悬停显示 */
+.mp-help-container {
+    position: relative;
+    display: inline-flex;
+}
+
+.mp-help-container .mp-about-button {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    flex: none;
+}
+
+.mp-help-container .mp-help-tooltip {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    display: none;
+}
+
+.mp-help-container:hover .mp-help-tooltip {
+    display: block;
+}
+
+/* 动作按钮尺寸增大 */
+.mp-action-button {
+    height: 44px !important;
+    font-size: 15px !important;
+    padding: 0 20px !important;
+    min-width: 140px;
+}
+
 /* ===== 关于作者弹窗 ===== */
 .mp-donate-overlay {
     position: fixed;

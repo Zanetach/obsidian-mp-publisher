@@ -52,14 +52,14 @@ export class MPView extends ItemView {
         container.classList.remove('view-content');
         container.classList.add('mp-view-content');
         
-        // 顶部工具栏 - 第一行：功能按钮
-        const toolbar1 = container.createEl('div', { cls: 'mp-toolbar mp-toolbar-row1' });
+        // 顶部工具栏 - 合并为单行：功能按钮 + 样式选择
+        const toolbar = container.createEl('div', { cls: 'mp-toolbar' });
 
         // 左侧按钮组
-        const leftGroup1 = toolbar1.createEl('div', { cls: 'mp-toolbar-group' });
+        const leftGroup = toolbar.createEl('div', { cls: 'mp-toolbar-group' });
 
         // 锁定按钮
-        this.lockButton = leftGroup1.createEl('button', {
+        this.lockButton = leftGroup.createEl('button', {
             cls: 'mp-toolbar-btn',
             attr: { 'aria-label': '锁定预览' }
         });
@@ -67,7 +67,7 @@ export class MPView extends ItemView {
         this.lockButton.addEventListener('click', () => this.togglePreviewLock());
 
         // 明暗模式切换按钮
-        const darkModeButton = leftGroup1.createEl('button', {
+        const darkModeButton = leftGroup.createEl('button', {
             cls: 'mp-toolbar-btn',
             attr: { 'aria-label': '切换明暗模式' }
         });
@@ -93,17 +93,8 @@ export class MPView extends ItemView {
             new Notice(`主题模式已切换为: ${newMode === 'auto' ? '跟随系统' : newMode === 'light' ? '亮色' : '暗色'}`);
         });
 
-        // 右侧操作按钮组
-        const rightGroup1 = toolbar1.createEl('div', { cls: 'mp-toolbar-group mp-toolbar-group-right' });
-        const helpButton = rightGroup1.createEl('button', {
-            cls: 'mp-toolbar-btn mp-help-button',
-            attr: { 'aria-label': '帮助' }
-        });
-        setIcon(helpButton, 'help-circle');
-
-        // 顶部工具栏 - 第二行：样式选择
-        const toolbar2 = container.createEl('div', { cls: 'mp-toolbar mp-toolbar-row2' });
-        const controlsGroup = toolbar2.createEl('div', { cls: 'mp-controls-group' });
+        // 样式选择控件组
+        const controlsGroup = toolbar.createEl('div', { cls: 'mp-controls-group' });
 
         // CSS 主题选择器
         const themeOptions = Object.entries(THEME_NAMES).map(([value, label]) => ({ value, label }));
@@ -236,6 +227,15 @@ export class MPView extends ItemView {
         });
 
         this.fontSizeSelect.addEventListener('change', updateFontSize);
+
+        // 右侧帮助按钮
+        const rightGroup = toolbar.createEl('div', { cls: 'mp-toolbar-group mp-toolbar-group-right' });
+        const helpButton = rightGroup.createEl('button', {
+            cls: 'mp-toolbar-btn mp-help-button',
+            attr: { 'aria-label': '帮助' }
+        });
+        setIcon(helpButton, 'help-circle');
+
         // 预览区域
         this.previewEl = container.createEl('div', { cls: 'mp-preview-area' });
 
@@ -243,14 +243,15 @@ export class MPView extends ItemView {
         const bottomBar = container.createEl('div', { cls: 'mp-bottom-bar' });
         // 创建中间控件容器
         const bottomControlsGroup = bottomBar.createEl('div', { cls: 'mp-controls-group' });
-        // 关于按钮
-        const aboutButton = bottomControlsGroup.createEl('button', {
+        // 帮助按钮和提示（悬停显示）
+        const helpContainer = bottomControlsGroup.createEl('div', { cls: 'mp-help-container' });
+        const helpButtonBottom = helpContainer.createEl('button', {
             cls: 'mp-about-button',
-            attr: { 'aria-label': '关于插件' }
+            attr: { 'aria-label': '帮助' }
         });
-        setIcon(aboutButton, 'info');
-        // 帮助提示框
-        bottomControlsGroup.createEl('div', {
+        setIcon(helpButtonBottom, 'help-circle');
+        // 帮助提示框 - 悬停显示
+        helpContainer.createEl('div', {
             cls: 'mp-help-tooltip',
             text: `使用指南：
                 1. 选择喜欢的主题模板
@@ -261,16 +262,22 @@ export class MPView extends ItemView {
                 6. 如果你喜欢这个插件，欢迎关注打赏`
         });
 
-        
-        // 复制按钮
-        this.copyButton = bottomControlsGroup.createEl('button', { 
-            text: '复制到公众号',
-            cls: 'mp-copy-button'
+        // 关于按钮
+        const aboutButton = bottomControlsGroup.createEl('button', {
+            cls: 'mp-about-button',
+            attr: { 'aria-label': '关于插件' }
         });
-        //发布按钮
-        const publishButton = bottomControlsGroup.createEl('button', { 
+        setIcon(aboutButton, 'info');
+
+        // 复制按钮 - 尺寸增大
+        this.copyButton = bottomControlsGroup.createEl('button', {
+            text: '复制到公众号',
+            cls: 'mp-copy-button mp-action-button'
+        });
+        // 发布按钮 - 尺寸增大
+        const publishButton = bottomControlsGroup.createEl('button', {
             text: '发布',
-            cls: 'mp-publish-button'
+            cls: 'mp-publish-button mp-action-button'
         });
 
         // 添加复制按钮点击事件
